@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import {RouterView} from 'vue-router';
-import { initiateConnection as connectToBluetoothDevice } from './Bluetooth';
-import { useRemindersStore } from './stores/reminder';
-
-const {initializeStore} = useRemindersStore();
-initializeStore();
 </script>
 
 <template>

@@ -24,8 +24,9 @@ export const isConnected = () => {
   return CONNECTED;
 };
 
-export const initiateConnection = () => {
-  navigator.bluetooth
+export const initiateConnection = async () => {
+  const {initializeStore} = useRemindersStore();
+  return navigator.bluetooth
     .requestDevice({
       filters: [
         {
@@ -75,6 +76,7 @@ export const initiateConnection = () => {
         });
 
         CONNECTED = true;
+        initializeStore();
         return Promise.resolve();
       },
     )
@@ -116,8 +118,6 @@ const syncTime = () => {
     '0',
   );
   const timeString = `${year}&${month}&${date}&${hours}&${mins}`;
-
-  console.log(timeString, decoder.decode(encoder.encode(timeString)));
 
   if (CONNECTED) {
     dateCharacteristic?.writeValue(encoder.encode(timeString));

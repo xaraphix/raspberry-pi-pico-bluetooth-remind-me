@@ -18,7 +18,7 @@ import router from '@/router';
 export const useRemindersStore = defineStore(REMINDERS, () => {
   const reminders = ref<Reminder[]>([]);
   const remindersCount = ref<number>(0);
-  const currentReminder = ref<Reminder | null>(null);
+  const currentReminders = ref<Reminder[]>([]);
   const bluetoothConnected = ref<boolean>(false);
 
   setInterval(() => {
@@ -43,8 +43,34 @@ export const useRemindersStore = defineStore(REMINDERS, () => {
 
   const notifyReminder = (reminder: Reminder) => {
     updateReminderInStorage(reminder);
-    currentReminder.value = reminder;
+    currentReminders.value.push(reminder);
+
+    if (currentReminders.value.length > 10) {
+      currentReminders.value = currentReminders.value.splice(
+        0,
+        currentReminders.value.length - 4,
+      );
+    }
+    sendBrowserNotification(reminder);
     playSound();
+  };
+
+  const sendBrowserNotification = (reminder: Reminder) => {
+    if ('Notification' in window) {
+      // Request permission to show notifications
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          // Create a notification
+          new Notification('Reminder', {
+            body: reminder.name,
+          });
+        } else {
+          console.log('Notification permission denied.');
+        }
+      });
+    } else {
+      console.log('Notification API not supported.');
+    }
   };
 
   const addNewReminder = (reminder: Reminder) => {
@@ -79,10 +105,10 @@ export const useRemindersStore = defineStore(REMINDERS, () => {
   const getAllReminders = (): Reminder[] => {
     return getAllRemindersFromLocalStorage();
   };
-  const data = 'http://soundbible.com/mp3/analog-watch-alarm_daniel-simion.mp3';
+  // const data = 'http://soundbible.com/mp3/analog-watch-alarm_daniel-simion.mp3';
   const playSound = () => {
-    const audio = new Audio(data);
-    audio.play();
+    // const audio = new Audio(data);
+    // audio.play();
   };
 
   return {
@@ -93,7 +119,7 @@ export const useRemindersStore = defineStore(REMINDERS, () => {
     getAllReminders,
     getReminderById,
     initializeStore,
-    currentReminder,
+    currentReminders,
     notifyReminder,
     acknowledgeReminder,
   };

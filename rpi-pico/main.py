@@ -24,6 +24,7 @@ _ADV_APPEARANCE_GENERIC_THERMOMETER = const(768)
 _ADV_INTERVAL_MS = 250_000
 TASKS = []
 
+led = machine.Pin("LED", machine.Pin.OUT)
 # Register GATT server.
 task_service = aioble.Service(TASK_SERVICE_UUID)
 task_characteristic = aioble.Characteristic(
@@ -36,6 +37,7 @@ time_characteristic = aioble.Characteristic(
 )
 aioble.register_services(task_service)
 CONNECTION = None
+
 async def peripheral_task():
     global CONNECTION
     while True:
@@ -55,13 +57,12 @@ async def peripheral_task():
                 append_to_tasks(task)
                 await asyncio.sleep_ms(500)
             
-            CONNECTION = None
-            print("Disconnected")
+            print("Disconnected")  
 
 async def time_task():
     global CONNECTION
     while True:
-        while CONNECTION:
+        while CONNECTION and CONNECTION.is_connected():
             await time_characteristic.written()
             time = time_characteristic.read().decode('utf-8').split("&")
             set_time(time)
@@ -83,16 +84,36 @@ def set_time(_time):
     except:
         rtc.datetime((year, month, date, 0, hours, mins, 0, 20))
 
+async def blink_task():
+    """ Task to blink LED """
+    
+    global CONNECTION
+    toggle = True
+    while True:
+        led.value(toggle)
+        toggle = not toggle
+        blink = 1000
+        if CONNECTION and CONNECTION.is_connected():
+            blink = 1000
+        else:
+            blink = 250
+        await asyncio.sleep_ms(blink)
+        
 def append_to_tasks(task):
     global TASKS
-    
+    already_present = False
     id = task[0]
     if (task[3] == 'Y'):
         tasks = []
         for t in TASKS:
+            if t.id == id:
+                already_present = True
             if t.id != id:
                 tasks.append(t)
         TASKS = tasks
+        return
+    
+    if already_present:
         return
     
     interval_seconds = int(task[1])
@@ -103,20 +124,23 @@ def append_to_tasks(task):
     TASKS.append(new_task)
 
 async def reminders_task():
+    global CONNECTION
     while True:
-        tasks_to_remind = get_tasks_to_remind()
-        if not len(tasks_to_remind):
-            print('NO TASKS')
-            task_characteristic.write('__$$NoTasks')
-            await asyncio.sleep_ms(10)
-        else:
-            
-            print('TASKS TO SEND')
-            for v in tasks_to_remind:
-                task_characteristic.write(v)
+        while CONNECTION and CONNECTION.is_connected():
+            tasks_to_remind = get_tasks_to_remind()
+            if not len(tasks_to_remind):
+                print('NO TASKS')
+                task_characteristic.write('__$$NoTasks')
                 await asyncio.sleep_ms(10)
+            else:
+                
+                print('TASKS TO SEND')
+                for v in tasks_to_remind:
+                    task_characteristic.write(v)
+                    await asyncio.sleep_ms(10)
+            await asyncio.sleep_ms(100)
+            tasks_to_remind = []
         await asyncio.sleep_ms(100)
-        tasks_to_remind = []
 
 def get_tasks_to_remind():
     global TASKS
@@ -131,7 +155,8 @@ async def main():
     t1 = asyncio.create_task(reminders_task())
     t2 = asyncio.create_task(peripheral_task())
     t3 = asyncio.create_task(time_task())
-    await asyncio.gather(t1, t2, t3)
+    t4 = asyncio.create_task(blink_task())
+    await asyncio.gather(t1, t2, t3, t4)
 
 asyncio.run(main())
 

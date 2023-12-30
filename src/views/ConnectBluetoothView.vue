@@ -2,9 +2,10 @@
 import { initiateConnection as connectToBluetoothDevice } from '@/Bluetooth';
 import { ref } from 'vue';
 let connecting = ref<Boolean>(false);
-const connect = () => {
+const connect = async () => {
   connecting.value = true;
-  connectToBluetoothDevice();
+  await connectToBluetoothDevice();
+  connecting.value = false;
 }
 </script>
 
@@ -29,7 +30,7 @@ const connect = () => {
       @click="connect">
       <div
         class="flex h-full w-full flex-row items-center justify-center space-x-4 rounded-2xl border-8 border-l-0 border-t-0 border-slate-300 py-6">
-        <span class="text-error-container-dark font-heading text-xl font-bold text-black select-none">
+        <span class="text-error-container-dark font-heading text-xl font-bold text-black select-none hover:text-[#0000FF]">
           Connect
         </span>
       </div>

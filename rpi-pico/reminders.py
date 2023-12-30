@@ -19,4 +19,3 @@ class Reminder:
             if self.periodic == 'N':
                 self.completed = 'Y'
   
-

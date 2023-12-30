@@ -78,7 +78,6 @@ def set_time(_time):
     hours = int(_time[3])
     mins = int(float(_time[4])/1)
     seconds = int((float(_time[4])* 60) % 60)
-    print(mins, seconds)
     try:
         rtc.datetime((year, month, date, 0, hours, mins, seconds, 1))
     except:
@@ -120,7 +119,6 @@ def append_to_tasks(task):
     completed = 'N'
     periodic = task[2]
     new_task = Reminder(id, interval_seconds, completed, periodic)
-    print(task)
     TASKS.append(new_task)
 
 async def reminders_task():
@@ -129,12 +127,9 @@ async def reminders_task():
         while CONNECTION and CONNECTION.is_connected():
             tasks_to_remind = get_tasks_to_remind()
             if not len(tasks_to_remind):
-                print('NO TASKS')
                 task_characteristic.write('__$$NoTasks')
                 await asyncio.sleep_ms(10)
             else:
-                
-                print('TASKS TO SEND')
                 for v in tasks_to_remind:
                     task_characteristic.write(v)
                     await asyncio.sleep_ms(10)

@@ -70,7 +70,7 @@ const calcColor = (index: number) => {
 
 
     <!-- Button to open drawer -->
-    <div class="fixed top-1/2 right-0 m-4 z-50">
+    <div class="fixed top-1/2 right-0 -mt-4 mr-4 z-50">
       <button v-if="!isDrawerOpen" @click="toggleDrawer"
         class="flex items-center justify-center w-12 h-12 bg-gray-700 rounded-full text-white">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
